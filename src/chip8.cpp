@@ -21,6 +21,15 @@ void Chip8::loadROM(const std::string& path) {
         throw std::runtime_error("ROM size exceeds available memory: " + std::to_string(size) + " bytes");
     }
 
+    /*
+    Clear the previous ROM from the ROM area of memory before loading a new one.
+    Without this, loading a smaller ROM would leave the unused tail of the old ROM
+    in memory. For example, if the old ROM occupies 0x200-0x204 but the new ROM
+    only occupies 0x200-0x202, addresses 0x203-0x204 would still contain bytes
+    from the old ROM. Clearing the ROM area prevents stale data from remaining.
+    */
+    std::fill(memory.begin(), memory.end(), 0);
+
     file.read(reinterpret_cast<char*>(&memory[0x200]), size); // Load ROM into memory starting at 0x200
     pc = 0x200; // Set program counter to start of the loaded ROM
 }
