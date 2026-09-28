@@ -1,0 +1,1 @@
+CHIP-8 has 16 tiny 8-bit storage boxes called V0–VF. Programs use them to temporarily hold values. VF is special because many operations use it to report things like carry, borrow, or collision.
