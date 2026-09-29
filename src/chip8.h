@@ -19,4 +19,6 @@ struct Chip8 {
     std::array<uint8_t, 64 * 32> display{}; // Display buffer; 64x32 pixels, each pixel is either on (1) or off (0)
 
     void loadROM(const std::string& path);
+
+    uint16_t fetch();
 };

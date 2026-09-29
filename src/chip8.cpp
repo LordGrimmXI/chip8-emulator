@@ -33,3 +33,10 @@ void Chip8::loadROM(const std::string& path) {
     file.read(reinterpret_cast<char*>(&memory[0x200]), size); // Load ROM into memory starting at 0x200
     pc = 0x200; // Set program counter to start of the loaded ROM
 }
+
+uint16_t Chip8::fetch() {
+    // Fetch the next instruction from memory at the current program counter (pc)
+    uint16_t instruction = (memory[pc] << 8) | memory[pc + 1];
+    pc += 2; // Increment program counter to point to the next instruction
+    return instruction;
+}
