@@ -21,4 +21,6 @@ struct Chip8 {
     void loadROM(const std::string& path);
 
     uint16_t fetch();
+
+    void execute(uint16_t opcode);
 };

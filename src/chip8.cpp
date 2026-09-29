@@ -1,7 +1,8 @@
 #include "chip8.h"
 
 #include <stdexcept> // For std::runtime_error
-#include <fstream>
+#include <fstream>   // For std::ifstream
+#include <sstream>   // For std::ostringstream
 
 void Chip8::loadROM(const std::string& path) {
     // Open file in binary mode
@@ -39,4 +40,21 @@ uint16_t Chip8::fetch() {
     uint16_t instruction = (memory[pc] << 8) | memory[pc + 1];
     pc += 2; // Increment program counter to point to the next instruction
     return instruction;
+}
+
+void Chip8::execute(uint16_t opcode) {
+    uint8_t category = (opcode & 0xF000) >> 12;
+    uint8_t X        = (opcode & 0x0F00) >> 8;
+    uint8_t Y        = (opcode & 0x00F0) >> 4;
+    uint8_t N        = (opcode & 0x000F);
+    uint8_t NN       = (opcode & 0x00FF);
+    uint16_t NNN     = (opcode & 0x0FFF);
+
+    switch (category) {
+        default: {
+            std::ostringstream oss;
+            oss << "Unknown opcode: 0x" << std::hex << opcode;
+            throw std::runtime_error(oss.str());
+        }
+    }
 }
