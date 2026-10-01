@@ -7,6 +7,10 @@
 
 std::uniform_int_distribution<int> dist(0, 255); // Distribution for random byte generation
 
+Chip8::Chip8() {
+    std::copy(FONT.begin(), FONT.end(), memory.begin() + FONT_START);
+}
+
 void Chip8::loadROM(const std::string& path) {
     // Open file in binary mode
     std::ifstream file(path, std::ios::binary);
@@ -31,8 +35,9 @@ void Chip8::loadROM(const std::string& path) {
     in memory. For example, if the old ROM occupies 0x200-0x204 but the new ROM
     only occupies 0x200-0x202, addresses 0x203-0x204 would still contain bytes
     from the old ROM. Clearing the ROM area prevents stale data from remaining.
+    We clear memory from 0x200 to the end of memory to preserve the font data in the lower memory area (0x000-0x1FF).
     */
-    std::fill(memory.begin(), memory.end(), 0);
+    std::fill(memory.begin() + 0x200, memory.end(), 0);
 
     file.read(reinterpret_cast<char*>(&memory[0x200]), size); // Load ROM into memory starting at 0x200
     pc = 0x200; // Set program counter to start of the loaded ROM
@@ -194,6 +199,24 @@ void Chip8::execute(uint16_t opcode) {
             V[X] = randomByte & NN;         // Set VX to the result of the AND operation
             break;
         }
+
+        case 0xF:
+            switch(NN) {
+                case 0x1E:
+                    I += V[X];
+                    break;
+
+                case 0x29:
+                    I = FONT_START + (V[X] * 5);
+                    break;
+
+                default: {
+                    std::ostringstream oss;
+                    oss << "Unknown opcode: 0x" << std::hex << opcode;
+                    throw std::runtime_error(oss.str());
+                }
+            }
+            break;
 
         default: {
             std::ostringstream oss;
