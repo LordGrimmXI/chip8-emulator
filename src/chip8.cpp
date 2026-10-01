@@ -3,6 +3,9 @@
 #include <stdexcept> // For std::runtime_error
 #include <fstream>   // For std::ifstream
 #include <sstream>   // For std::ostringstream
+#include <algorithm> // For std::fill
+
+std::uniform_int_distribution<int> dist(0, 255); // Distribution for random byte generation
 
 void Chip8::loadROM(const std::string& path) {
     // Open file in binary mode
@@ -77,17 +80,35 @@ void Chip8::execute(uint16_t opcode) {
             pc = NNN;         // Jump to subroutine
             break;
 
-        case 0x6:       // Set VX to NN
+        case 0x3:             // Skip next instruction if VX equals NN
+            if (V[X] == NN) {
+                pc += 2;
+            }
+            break;
+
+        case 0x4:             // Skip next instruction if VX does not equal NN
+            if (V[X] != NN) {
+                pc += 2;
+            }
+            break;
+
+        case 0x5:             // Skip next instruction if VX equals VY
+            if (V[X] == V[Y]) {
+                pc += 2;
+            }
+            break;
+
+        case 0x6:             // Set VX to NN
             V[X] = NN;
             break;
         
-        case 0x7:       // Add NN to VX (without carry)
+        case 0x7:             // Add NN to VX (without carry)
             // V[X] is 8-bit, so overflow naturally wraps around.
             // This is intentional CHIP-8 behavior; VF is NOT affected by 7XNN.
             V[X] += NN;
             break;
         
-        case 0x8:
+        case 0x8:             // Arithmetic and logic operations between VX and VY
             switch(N) {
                 case 0:
                     V[X] = V[Y];  // Set VX to the value of VY
@@ -157,6 +178,22 @@ void Chip8::execute(uint16_t opcode) {
                 }
             }
             break;
+
+        case 0x9:             // Skip next instruction if VX does not equal VY
+            if (V[X] != V[Y]) {
+                pc += 2;
+            }
+            break;
+
+        case 0xA:             // Set I to the address NNN
+            I = NNN;
+            break;
+
+        case 0xC: {                         // Set VX to a random byte AND NN
+            uint8_t randomByte = static_cast<uint8_t>(dist(rng)); // Generate a random byte
+            V[X] = randomByte & NN;         // Set VX to the result of the AND operation
+            break;
+        }
 
         default: {
             std::ostringstream oss;
