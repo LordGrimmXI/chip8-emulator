@@ -210,6 +210,12 @@ void Chip8::execute(uint16_t opcode) {
                     I = FONT_START + (V[X] * 5);
                     break;
 
+                case 0x33:
+                    memory[I] = V[X] / 100;             // Store hundreds digit
+                    memory[I + 1] = (V[X] / 10) % 10;   // Store tens digit
+                    memory[I + 2] = V[X] % 10;          // Store units digit
+                    break;
+
                 default: {
                     std::ostringstream oss;
                     oss << "Unknown opcode: 0x" << std::hex << opcode;
