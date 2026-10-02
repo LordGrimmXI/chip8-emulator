@@ -203,17 +203,29 @@ void Chip8::execute(uint16_t opcode) {
         case 0xF:
             switch(NN) {
                 case 0x1E:
-                    I += V[X];
+                    I += V[X];                          // Add VX to I
                     break;
 
                 case 0x29:
-                    I = FONT_START + (V[X] * 5);
+                    I = FONT_START + (V[X] * 5);        // Point I to the sprite for the character in VX (each character is 5 bytes)
                     break;
 
                 case 0x33:
                     memory[I] = V[X] / 100;             // Store hundreds digit
                     memory[I + 1] = (V[X] / 10) % 10;   // Store tens digit
                     memory[I + 2] = V[X] % 10;          // Store units digit
+                    break;
+
+                case 0x55:
+                    for (uint8_t i = 0; i <= X; ++i) {
+                        memory[I + i] = V[i];           // Store registers V0 through VX in memory starting at address I
+                    }
+                    break;
+
+                case 0x65:
+                    for (uint8_t i = 0; i <= X; ++i) {
+                        V[i] = memory[I + i];           // Read registers V0 through VX from memory starting at address I
+                    }
                     break;
 
                 default: {
