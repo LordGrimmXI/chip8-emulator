@@ -13,3 +13,8 @@ add_executable(chip8
     src/main.cpp
     src/chip8.cpp
 )
+
+add_executable(chip8_tests
+    tests/test_chip8.cpp
+    src/chip8.cpp
+)
