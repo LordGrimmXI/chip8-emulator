@@ -580,6 +580,60 @@ void test_invalid_opcode() {
 }
 
 // ------------------------------------------------------------
+// Display
+// ------------------------------------------------------------
+
+static bool px(const Chip8& c, int x, int y) {
+    return c.display[y * Chip8::DISPLAY_WIDTH + x] != 0;
+}
+
+void test_draw_basic_and_xor() {
+    Chip8 c;
+    c.V[0] = 0; c.V[1] = 0; c.I = Chip8::FONT_START;    // glyph "0": F0 90 90 90 F0
+    c.execute(0xD015);
+
+    assert(px(c,0,0) && px(c,3,0) && !px(c,4,0));       // row 0: ████....
+    assert(px(c,0,1) && !px(c,1,1) && px(c,3,1));       // row 1: █..█....
+    assert(c.V[0xF] == 0);
+
+    c.execute(0xD015);                                  // draw again: erases
+    for (int y = 0; y < 5; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            assert(!px(c,x,y));
+        }
+    }
+    assert(c.V[0xF] == 1);
+}
+
+void test_draw_wrap_start() {
+    Chip8 c;
+    c.V[0] = 70; c.V[1] = 40; c.I = Chip8::FONT_START;
+    c.execute(0xD015);
+
+    assert(px(c,6,8) && px(c,9,8));                      // (70,40) -> (6,8)
+}
+
+void test_draw_clip_right() {
+    Chip8 c;
+    c.V[0] = 60; c.V[1] = 0; c.I = Chip8::FONT_START;
+    c.execute(0xD015);
+    
+    assert(px(c,60,0) && px(c,63,0));                    // visible part drawn
+    assert(!px(c,0,0) && !px(c,3,0));                    // NOT wrapped to the left
+}
+
+void test_clear_screen() {
+    Chip8 c;
+    c.V[0] = 0; c.V[1] = 0; c.I = Chip8::FONT_START;
+    c.execute(0xD015);
+    c.execute(0x00E0);
+    
+    for (int i = 0; i < 64 * 32; ++i) {
+        assert(c.display[i] == 0);
+    }
+}
+
+// ------------------------------------------------------------
 // Main
 // ------------------------------------------------------------
 
@@ -644,6 +698,11 @@ int main() {
     test_load_registers();
 
     test_invalid_opcode();
+
+    test_draw_basic_and_xor();
+    test_draw_wrap_start();
+    test_draw_clip_right();
+    test_clear_screen();
 
     std::cout << "All tests passed!\n";
 

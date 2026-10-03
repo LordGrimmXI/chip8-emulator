@@ -60,7 +60,11 @@ void Chip8::execute(uint16_t opcode) {
 
     switch (category) {
         case 0x0:
-            if (NN == 0xEE) {
+            if (NN == 0xE0) {       // Clear the display
+                std::fill(display.begin(), display.end(), 0);
+                draw_flag = true;
+            }
+            else if (NN == 0xEE) {
                 if (sp == 0) {
                     throw std::runtime_error("Stack underflow: cannot return from subroutine, stack is empty.");
                 }
@@ -72,11 +76,11 @@ void Chip8::execute(uint16_t opcode) {
             }
             break;
 
-        case 0x1:       // Jump to address NNN
+        case 0x1:             // Jump to address NNN
             pc = NNN;
             break;
         
-        case 0x2:       // Call subroutine at address NNN
+        case 0x2:             // Call subroutine at address NNN
             if (sp >= stack.size()) {
                 throw std::runtime_error("Stack overflow: cannot call subroutine, stack is full.");
             }
@@ -197,6 +201,35 @@ void Chip8::execute(uint16_t opcode) {
         case 0xC: {                         // Set VX to a random byte AND NN
             uint8_t randomByte = static_cast<uint8_t>(dist(rng)); // Generate a random byte
             V[X] = randomByte & NN;         // Set VX to the result of the AND operation
+            break;
+        }
+
+        case 0xD: {
+            // Read coordinates BEFORE touching VF (answer 1). Start position wraps.
+            const int x0 = V[X] % DISPLAY_WIDTH;
+            const int y0 = V[Y] % DISPLAY_HEIGHT;
+            V[0xF] = 0;
+
+            for (int row = 0; row < N; ++row) {
+                if (y0 + row >= DISPLAY_HEIGHT) break;          // clip bottom
+                
+                const uint8_t spriteByte = memory[I + row];
+
+                for (int col = 0; col < 8; ++col) {
+                    if (x0 + col >= DISPLAY_WIDTH) break;       // clip right
+
+                    if (spriteByte & (0x80 >> col)) {
+                        uint8_t& pixel = display[(y0 + row) * DISPLAY_WIDTH + (x0 + col)];
+
+                        if (pixel) {
+                            V[0xF] = 1;
+                        }
+                        pixel ^= 1;
+                    }
+                }
+            }
+
+            draw_flag = true;
             break;
         }
 

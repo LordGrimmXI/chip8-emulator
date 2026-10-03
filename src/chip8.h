@@ -17,7 +17,12 @@ struct Chip8 {
     uint8_t sp{};                             // Stack pointer; points to the top of the stack
 
     std::array<bool, 16> keys{};              // Input keys; 16 keys (0x0 to 0xF)
-    std::array<uint8_t, 64 * 32> display{};   // Display buffer; 64x32 pixels, each pixel is either on (1) or off (0)
+
+    static constexpr int DISPLAY_WIDTH  = 64;
+    static constexpr int DISPLAY_HEIGHT = 32;
+
+    std::array<uint8_t, DISPLAY_WIDTH * DISPLAY_HEIGHT> display{};    // Display buffer; 64x32 pixels, each pixel is either on (1) or off (0)
+    bool draw_flag = false;
 
     std::mt19937 rng{std::random_device{}()}; // Mersenne Twister random number generator
 
