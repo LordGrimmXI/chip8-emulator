@@ -278,6 +278,18 @@ void Chip8::execute(uint16_t opcode) {
                     }
                     break;
 
+                case 0x07:
+                    V[X] = delay_timer;                 // Set VX to the value of the delay timer
+                    break;
+
+                case 0x15:
+                    delay_timer = V[X];                 // Set the delay timer to VX
+                    break;
+                
+                case 0x18:
+                    sound_timer = V[X];                 // Set the sound timer to VX
+                    break;
+
                 default: {
                     std::ostringstream oss;
                     oss << "Unknown opcode: 0x" << std::hex << opcode;
@@ -291,5 +303,14 @@ void Chip8::execute(uint16_t opcode) {
             oss << "Unknown opcode: 0x" << std::hex << opcode;
             throw std::runtime_error(oss.str());
         }
+    }
+}
+
+void Chip8::updateTimers() {
+    if (delay_timer > 0) {
+        delay_timer--;
+    }
+    if (sound_timer > 0) {
+        sound_timer--;
     }
 }

@@ -639,6 +639,7 @@ void test_EX9E_skips_when_pressed() {
     c.keys[5] = true;
     uint16_t before = c.pc;
     c.execute(0xE29E);
+
     assert(c.pc == before + 2);
 }
 
@@ -648,6 +649,7 @@ void test_EX9E_does_not_skips_when_not_pressed() {
     c.keys[5] = false;
     uint16_t before = c.pc;
     c.execute(0xE29E);
+
     assert(c.pc == before);
 }
 
@@ -657,6 +659,7 @@ void test_EXA1_skips_when_not_pressed() {
     c.keys[5] = false;
     uint16_t before = c.pc;
     c.execute(0xE2A1);
+
     assert(c.pc == before + 2);
 }
 
@@ -666,6 +669,7 @@ void test_EXA1_does_not_skip_when_pressed() {
     c.keys[5] = true;
     uint16_t before = c.pc;
     c.execute(0xE2A1);
+
     assert(c.pc == before);
 }
 
@@ -675,6 +679,7 @@ void test_EX9E_masks_key_index() {
     c.keys[0xF] = true;
     uint16_t before = c.pc;
     c.execute(0xE29E);
+
     assert(c.pc == before + 2);
 }
 
@@ -690,6 +695,54 @@ void test_invalid_EX2FF() {
     catch (const std::runtime_error&) {
         // Expected: invalid opcode should throw
     }
+}
+
+// ------------------------------------------------------------
+// Timers
+// ------------------------------------------------------------
+
+void test_FX07_reads_delay_timer() {
+    Chip8 c;
+    c.delay_timer = 42;
+    c.execute(0xF207);
+
+    assert(c.V[2] == 42);
+}
+
+void test_FX15_sets_delay_timer() {
+    Chip8 c;
+    c.V[2] = 42;
+    c.execute(0xF215);
+
+    assert(c.delay_timer == 42);
+}
+
+void test_FX18_sets_sound_timer() {
+    Chip8 c;
+    c.V[2] = 42;
+    c.execute(0xF218);
+
+    assert(c.sound_timer == 42);
+}
+
+void test_updateTimers_decrements() {
+    Chip8 c;
+    c.delay_timer = 5;
+    c.sound_timer = 3;
+    c.updateTimers();
+
+    assert(c.delay_timer == 4);
+    assert(c.sound_timer == 2);
+}
+
+void test_updateTimers_stops_at_zero() {
+    Chip8 c;
+    c.delay_timer = 0;
+    c.sound_timer = 0;
+    c.updateTimers();
+    
+    assert(c.delay_timer == 0);   // not 255
+    assert(c.sound_timer == 0);
 }
 
 // ------------------------------------------------------------
@@ -769,7 +822,13 @@ int main() {
     test_EXA1_does_not_skip_when_pressed();
     test_EX9E_masks_key_index();
     test_invalid_EX2FF();
-    
+
+    test_FX07_reads_delay_timer();
+    test_FX15_sets_delay_timer();
+    test_FX18_sets_sound_timer();
+    test_updateTimers_decrements();
+    test_updateTimers_stops_at_zero();
+
     std::cout << "All tests passed!\n";
 
     return 0;

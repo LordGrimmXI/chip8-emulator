@@ -53,5 +53,10 @@ struct Chip8 {
 
     static constexpr uint16_t FONT_START = 0x50;
 
+    uint8_t delay_timer = 0;                       // Delay timer; counts down at 60Hz when non-zero
+    uint8_t sound_timer = 0;                       // Sound timer; counts down at 60Hz
+
+    void updateTimers();                            // Method to update the delay and sound timers
+
     Chip8();
 };
