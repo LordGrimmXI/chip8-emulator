@@ -22,7 +22,7 @@ struct Chip8 {
     static constexpr int DISPLAY_HEIGHT = 32;
 
     std::array<uint8_t, DISPLAY_WIDTH * DISPLAY_HEIGHT> display{};    // Display buffer; 64x32 pixels, each pixel is either on (1) or off (0)
-    bool draw_flag = false;
+    bool draw_flag = false;                   // Flag to indicate when the display needs to be redrawn
 
     std::mt19937 rng{std::random_device{}()}; // Mersenne Twister random number generator
 

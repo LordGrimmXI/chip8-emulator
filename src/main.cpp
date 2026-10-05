@@ -2,13 +2,13 @@
 #include <SDL.h>
 #include "chip8.h"
 
+// Each CHIP-8 pixel becomes a 10x10 SDL pixel block
+constexpr int pixelSize = 10;
+
 void render(SDL_Renderer* renderer, const Chip8& chip8) {
     // Clear the screen
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
-
-    // Each CHIP-8 pixel becomes a 10x10 SDL pixel block
-    const int pixelSize = 10;
 
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
@@ -36,6 +36,8 @@ void render(SDL_Renderer* renderer, const Chip8& chip8) {
 }
 
 int main(int argc, char* argv[]) {
+    bool running = true;
+
     std::cout << "Program started\n";
 
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -49,8 +51,8 @@ int main(int argc, char* argv[]) {
         "CHIP-8",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        Chip8::DISPLAY_WIDTH * 10,
-        Chip8::DISPLAY_HEIGHT * 10,
+        Chip8::DISPLAY_WIDTH * pixelSize,
+        Chip8::DISPLAY_HEIGHT * pixelSize,
         SDL_WINDOW_SHOWN
     );
 
@@ -95,11 +97,27 @@ int main(int argc, char* argv[]) {
 
     chip8.execute(0xD015);
 
-    // Render the current display
-    render(renderer, chip8);
+    while (running) {
+        SDL_Event event;
 
-    // Keep the window visible for 5 seconds
-    SDL_Delay(5000);
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                running = false;
+            }
+            else if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    running = false;
+                }
+            }
+        }
+
+        if (chip8.draw_flag) {
+            render(renderer, chip8);
+            chip8.draw_flag = false;
+        }
+
+        SDL_Delay(16); // Roughly 60 FPS
+    }
 
     // Renderer must be destroyed before the window
     SDL_DestroyRenderer(renderer);
