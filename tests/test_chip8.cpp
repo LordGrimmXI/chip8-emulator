@@ -633,6 +633,65 @@ void test_clear_screen() {
     }
 }
 
+void test_EX9E_skips_when_pressed() {
+    Chip8 c;
+    c.V[2] = 5;
+    c.keys[5] = true;
+    uint16_t before = c.pc;
+    c.execute(0xE29E);
+    assert(c.pc == before + 2);
+}
+
+void test_EX9E_does_not_skips_when_not_pressed() {
+    Chip8 c;
+    c.V[2] = 5;
+    c.keys[5] = false;
+    uint16_t before = c.pc;
+    c.execute(0xE29E);
+    assert(c.pc == before);
+}
+
+void test_EXA1_skips_when_not_pressed() {
+    Chip8 c;
+    c.V[2] = 5;
+    c.keys[5] = false;
+    uint16_t before = c.pc;
+    c.execute(0xE2A1);
+    assert(c.pc == before + 2);
+}
+
+void test_EXA1_does_not_skip_when_pressed() {
+    Chip8 c;
+    c.V[2] = 5;
+    c.keys[5] = true;
+    uint16_t before = c.pc;
+    c.execute(0xE2A1);
+    assert(c.pc == before);
+}
+
+void test_EX9E_masks_key_index() {
+    Chip8 c;
+    c.V[2] = 0x1F;
+    c.keys[0xF] = true;
+    uint16_t before = c.pc;
+    c.execute(0xE29E);
+    assert(c.pc == before + 2);
+}
+
+void test_invalid_EX2FF() {
+    Chip8 c;
+
+    try {
+        c.execute(0xE2FF);
+
+        // If we reach here, no exception was thrown → test fails
+        assert(false);
+    }
+    catch (const std::runtime_error&) {
+        // Expected: invalid opcode should throw
+    }
+}
+
 // ------------------------------------------------------------
 // Main
 // ------------------------------------------------------------
@@ -704,6 +763,13 @@ int main() {
     test_draw_clip_right();
     test_clear_screen();
 
+    test_EX9E_skips_when_pressed();
+    test_EX9E_does_not_skips_when_not_pressed();
+    test_EXA1_skips_when_not_pressed();
+    test_EXA1_does_not_skip_when_pressed();
+    test_EX9E_masks_key_index();
+    test_invalid_EX2FF();
+    
     std::cout << "All tests passed!\n";
 
     return 0;

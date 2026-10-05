@@ -35,6 +35,30 @@ void render(SDL_Renderer* renderer, const Chip8& chip8) {
     SDL_RenderPresent(renderer);
 }
 
+int keyToIndex(SDL_Keycode key) {
+    switch (key) {
+        case SDLK_1: return 0x1;
+        case SDLK_2: return 0x2;
+        case SDLK_3: return 0x3;
+        case SDLK_4: return 0xC;
+        case SDLK_q: return 0x4;
+        case SDLK_w: return 0x5;
+        case SDLK_e: return 0x6;
+        case SDLK_r: return 0xD;
+        case SDLK_a: return 0x7;
+        case SDLK_s: return 0x8;
+        case SDLK_d: return 0x9;
+        case SDLK_f: return 0xE;
+        case SDLK_z: return 0xA;
+        case SDLK_x: return 0x0;
+        case SDLK_c: return 0xB;
+        case SDLK_v: return 0xF;
+
+        default:
+            return -1; // Not a valid CHIP-8 key
+    }
+}
+
 int main(int argc, char* argv[]) {
     bool running = true;
 
@@ -104,9 +128,27 @@ int main(int argc, char* argv[]) {
             if (event.type == SDL_QUIT) {
                 running = false;
             }
+            else if (event.type == SDL_WINDOWEVENT) {
+                if (event.window.event == SDL_WINDOWEVENT_EXPOSED) {
+                    chip8.draw_flag = true;   // force a redraw on the next loop pass
+                }
+            }
             else if (event.type == SDL_KEYDOWN) {
                 if (event.key.keysym.sym == SDLK_ESCAPE) {
                     running = false;
+                }
+
+                int index = keyToIndex(event.key.keysym.sym);
+
+                if (index != -1) {
+                    chip8.keys[index] = true;
+                }
+            }
+            else if (event.type == SDL_KEYUP) {
+                int index = keyToIndex(event.key.keysym.sym);
+
+                if (index != -1) {
+                    chip8.keys[index] = false;
                 }
             }
         }

@@ -233,6 +233,23 @@ void Chip8::execute(uint16_t opcode) {
             break;
         }
 
+        case 0xE:
+            if (NN == 0x9E) {               // Skip next instruction if key with the value of VX is pressed
+                if (keys[V[X] & 0x0F]) {    // Ensure the key index is within 0x0 to 0xF
+                    pc += 2;
+                }
+            }
+            else if (NN == 0xA1) {          // Skip next instruction if key with the value of VX is not pressed
+                if (!keys[V[X] & 0x0F]) {   // Ensure the key index is within 0x0 to 0xF
+                    pc += 2;
+                }
+            } else {
+                std::ostringstream oss;
+                oss << "Unknown opcode: 0x" << std::hex << opcode;
+                throw std::runtime_error(oss.str());
+            }
+            break;
+
         case 0xF:
             switch(NN) {
                 case 0x1E:
