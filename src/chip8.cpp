@@ -137,9 +137,10 @@ void Chip8::execute(uint16_t opcode) {
                 
                 case 4: {
                     uint16_t sum = static_cast<uint16_t>(V[X]) + V[Y];
+                    uint8_t carry = (sum > 0xFF) ? 1 : 0;
 
-                    V[0xF] = (sum > 0xFF) ? 1 : 0;
                     V[X] = static_cast<uint8_t>(sum); // Set VX to VX + VY; VF is set if carry occurs
+                    V[0xF] = carry;
                     
                     break;
                 }

@@ -2,8 +2,9 @@
 #include <SDL.h>
 #include "chip8.h"
 
-// Each CHIP-8 pixel becomes a 10x10 SDL pixel block
-constexpr int pixelSize = 10;
+constexpr int pixelSize = 10;            // Each CHIP-8 pixel becomes a 10x10 SDL pixel block
+constexpr int CPU_CYCLES_PER_FRAME = 10; // Number of CPU cycles to execute per frame
+constexpr int FRAME_MS = 16;             // Roughly 60 FPS
 
 void render(SDL_Renderer* renderer, const Chip8& chip8) {
     // Clear the screen
@@ -19,7 +20,7 @@ void render(SDL_Renderer* renderer, const Chip8& chip8) {
             int index = y * Chip8::DISPLAY_WIDTH + x;
 
             if (chip8.display[index]) {
-                SDL_Rect pixel {
+                SDL_Rect pixel{
                     x * pixelSize,
                     y * pixelSize,
                     pixelSize,
@@ -60,6 +61,7 @@ int keyToIndex(SDL_Keycode key) {
 }
 
 int main(int argc, char* argv[]) {
+    const std::string romPath = (argc > 1) ? argv[1] : "roms/IBM Logo.ch8";
     bool running = true;
 
     std::cout << "Program started\n";
@@ -82,7 +84,6 @@ int main(int argc, char* argv[]) {
 
     if (!window) {
         std::cerr << "SDL_CreateWindow failed: " << SDL_GetError() << '\n';
-
         SDL_Quit();
         return 1;
     }
@@ -98,7 +99,6 @@ int main(int argc, char* argv[]) {
 
     if (!renderer) {
         std::cerr << "SDL_CreateRenderer failed: " << SDL_GetError() << '\n';
-
         SDL_DestroyWindow(window);
         SDL_Quit();
         return 1;
@@ -108,32 +108,37 @@ int main(int argc, char* argv[]) {
 
     Chip8 chip8;
 
-    // Load the 0 glyph at the top-left corner
-    chip8.V[0] = 0;
-    chip8.V[1] = 0;
-    chip8.I = Chip8::FONT_START;
-
-    chip8.execute(0xD015);
-
-    // Try drawing another 0 at a different position
-    chip8.V[0] = 10;
-    chip8.V[1] = 5;
-
-    chip8.execute(0xD015);
+    try {
+        chip8.loadROM(romPath);
+    }
+    catch (const std::runtime_error& e) {
+        std::cerr << "Error loading ROM: " << e.what() << '\n';
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
 
     while (running) {
+        // 1. Start timing this frame
+        const Uint32 frameStart = SDL_GetTicks();
+
+        // 2. Handle SDL events
         SDL_Event event;
 
         while (SDL_PollEvent(&event)) {
+
             if (event.type == SDL_QUIT) {
                 running = false;
             }
             else if (event.type == SDL_WINDOWEVENT) {
+
                 if (event.window.event == SDL_WINDOWEVENT_EXPOSED) {
-                    chip8.draw_flag = true;   // force a redraw on the next loop pass
+                    chip8.draw_flag = true; // Force a redraw on the next loop pass
                 }
             }
             else if (event.type == SDL_KEYDOWN) {
+
                 if (event.key.keysym.sym == SDLK_ESCAPE) {
                     running = false;
                 }
@@ -145,6 +150,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             else if (event.type == SDL_KEYUP) {
+
                 int index = keyToIndex(event.key.keysym.sym);
 
                 if (index != -1) {
@@ -153,18 +159,36 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        // 3. Run several CHIP-8 CPU cycles this frame
+        try {
+            for (int i = 0; i < CPU_CYCLES_PER_FRAME; ++i) {
+                chip8.execute(chip8.fetch());
+            }
+        } catch (const std::runtime_error& e) {
+            std::cerr << "Emulation error: " << e.what() << '\n';
+            running = false;
+        }
+
+        // 4. Update CHIP-8 timers
+        chip8.updateTimers();
+
+        // 5. Render if the display changed
         if (chip8.draw_flag) {
             render(renderer, chip8);
             chip8.draw_flag = false;
         }
 
-        SDL_Delay(16); // Roughly 60 FPS
+        // Wait only for the remaining frame time
+        const Uint32 elapsed = SDL_GetTicks() - frameStart;
+
+        if (elapsed < FRAME_MS) {
+            SDL_Delay(FRAME_MS - elapsed);
+        }
     }
 
     // Renderer must be destroyed before the window
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-
     SDL_Quit();
 
     std::cout << "Program finished\n";

@@ -296,6 +296,14 @@ void test_add_registers_without_carry() {
     assert(c.V[0xF] == 0);
 }
 
+void test_8XY4_flag_wins_when_X_is_VF() {
+    Chip8 c;
+    c.V[0xF] = 0xFF;
+    c.V[1] = 0x01;
+    c.execute(0x8F14);          // VF = VF + V1; sum = 0x100, so carry
+    assert(c.V[0xF] == 1);      // the flag, not the truncated sum (0x00)
+}
+
 // ------------------------------------------------------------
 // 8XY5 - VX -= VY, VF = no borrow
 // ------------------------------------------------------------
@@ -780,6 +788,7 @@ int main() {
 
     test_add_registers_with_carry();
     test_add_registers_without_carry();
+    test_8XY4_flag_wins_when_X_is_VF();
 
     test_subtract_registers_without_borrow();
     test_subtract_registers_with_borrow();
