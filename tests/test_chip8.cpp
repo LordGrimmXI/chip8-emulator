@@ -453,6 +453,24 @@ void test_set_I() {
 }
 
 // ------------------------------------------------------------
+// BNNN - Jump to address NNN + V0
+// ------------------------------------------------------------
+
+void test_BNNN_jumps_with_V0_offset() {
+    Chip8 c;
+    c.V[0] = 0x10;
+    c.execute(0xB300);
+    assert(c.pc == 0x310);
+}
+
+void test_BNNN_zero_offset() {
+    Chip8 c;
+    c.V[0] = 0;
+    c.execute(0xB200);
+    assert(c.pc == 0x200);
+}
+
+// ------------------------------------------------------------
 // CXNN - Random byte & NN
 // ------------------------------------------------------------
 
@@ -566,6 +584,43 @@ void test_load_registers() {
     assert(c.V[1] == 20);
     assert(c.V[2] == 30);
     assert(c.V[3] == 40);
+}
+
+// ------------------------------------------------------------
+// FX0A - Wait for key press
+// ------------------------------------------------------------
+
+void test_wait_for_key_no_key() {
+    Chip8 c;
+    c.pc = 0x202;
+    c.execute(0xF00A);
+
+    // No key pressed → PC must not advance
+    assert(c.V[0] == 0);
+    assert(c.pc == 0x200);
+}
+
+void test_wait_for_key_one_key() {
+    Chip8 c;
+    c.keys[0x5] = true;
+    c.pc = 0x202;
+    c.execute(0xF00A);
+
+    // Key 5 pressed → store 5 in V0 and advance PC
+    assert(c.V[0] == 0x5);
+    assert(c.pc == 0x202);
+}
+
+void test_wait_for_key_two_keys() {
+    Chip8 c;
+    c.keys[0x3] = true;
+    c.keys[0xA] = true;
+    c.pc = 0x202;
+    c.execute(0xF00A);
+
+    // First pressed key encountered should be stored
+    assert(c.V[0] == 0x3);
+    assert(c.pc == 0x202);
 }
 
 // ------------------------------------------------------------
@@ -817,6 +872,10 @@ int main() {
 
     test_store_registers();
     test_load_registers();
+
+    test_wait_for_key_no_key();
+    test_wait_for_key_one_key();
+    test_wait_for_key_two_keys();
 
     test_invalid_opcode();
 

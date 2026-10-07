@@ -36,6 +36,7 @@ void render(SDL_Renderer* renderer, const Chip8& chip8) {
     SDL_RenderPresent(renderer);
 }
 
+// Convert SDL_Keycode to CHIP-8 key index (0x0 to 0xF)
 int keyToIndex(SDL_Keycode key) {
     switch (key) {
         case SDLK_1: return 0x1;

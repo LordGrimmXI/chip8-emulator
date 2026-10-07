@@ -199,6 +199,10 @@ void Chip8::execute(uint16_t opcode) {
             I = NNN;
             break;
 
+        case 0xB:             // Jump to address NNN + V0
+            pc = NNN + V[0];
+            break;
+
         case 0xC: {                         // Set VX to a random byte AND NN
             uint8_t randomByte = static_cast<uint8_t>(dist(rng)); // Generate a random byte
             V[X] = randomByte & NN;         // Set VX to the result of the AND operation
@@ -290,6 +294,25 @@ void Chip8::execute(uint16_t opcode) {
                 case 0x18:
                     sound_timer = V[X];                 // Set the sound timer to VX
                     break;
+
+                case 0x0A: {
+                    // Wait for a key press and store the value of the key in VX
+                    bool keyPressed = false;
+
+                    for (uint8_t i = 0; i < keys.size(); ++i) {
+                        if (keys[i]) {
+                            V[X] = i;
+                            keyPressed = true;
+                            break;
+                        }
+                    }
+
+                    if (!keyPressed) {
+                        pc -= 2; // Repeat this instruction until a key is pressed
+                    }
+
+                    break;
+                }
 
                 default: {
                     std::ostringstream oss;
