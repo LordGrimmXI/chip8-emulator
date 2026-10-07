@@ -1,7 +1,7 @@
 # CHIP-8 Emulator (C++17, SDL2)
 ![Pong running in the emulator](docs/pong.gif)
 
-![IBM Logo test ROM running in the emulator](docs/IBM.png)
+![IBM Logo test ROM running in the emulator](docs/IBM.PNG)
 
 A CHIP-8 interpreter written in C++17 with SDL2 for display and input. CHIP-8 is a small virtual machine from the 1970s with 4 KB of memory, 16 registers, a 64×32 monochrome display, and a 16-key keypad. I built this as a learning project to understand how a CPU fetches, decodes, and executes instructions, and how an emulator keeps CPU, timers, and rendering running at different rates.
 
